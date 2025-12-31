@@ -473,42 +473,45 @@ def join_session(session_code):
         data = request.json
         participant_name = data.get('participant_name')
         is_host = data.get('is_host', False)
-        
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Get quiz ID by session code
         cursor.execute("SELECT id FROM quizzes WHERE session_code = %s", (session_code,))
         result = cursor.fetchone()
-        
+
         if not result:
             cursor.close()
             conn.close()
             return jsonify({'error': 'Quiz not found'}), 404
-        
+
         quiz_id = result[0]
-        
-        # Insert participant
+
+        # Check if participant already exists in the database for this session
         cursor.execute(
-            "INSERT INTO participants (quiz_id, participant_name, session_code, is_host) VALUES (%s, %s, %s, %s)",
-            (quiz_id, participant_name, session_code, is_host)
+            "SELECT id FROM participants WHERE session_code = %s AND participant_name = %s AND is_host = %s",
+            (session_code, participant_name, is_host)
         )
-        participant_id = cursor.lastrowid
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
+        existing_participant = cursor.fetchone()
+
+        if existing_participant:
+            # Use existing participant
+            participant_id = existing_participant[0]
+        else:
+            # Insert new participant
+            cursor.execute(
+                "INSERT INTO participants (quiz_id, participant_name, session_code, is_host) VALUES (%s, %s, %s, %s)",
+                (quiz_id, participant_name, session_code, is_host)
+            )
+            participant_id = cursor.lastrowid
+
         # Add to active session if it exists, otherwise create it
         if session_code not in active_sessions:
             # Get total questions for the quiz to initialize the session
-            conn = get_db_connection()
-            cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) as total_questions FROM questions WHERE quiz_id = %s", (quiz_id,))
             total_questions_result = cursor.fetchone()
             total_questions = total_questions_result[0] if total_questions_result else 0
-            cursor.close()
-            conn.close()
 
             active_sessions[session_code] = {
                 'quiz_id': quiz_id,
@@ -519,14 +522,27 @@ def join_session(session_code):
                 'total_questions': total_questions
             }
 
-        # Add participant to the session
-        participant_info = {
-            'id': participant_id,
-            'name': participant_name,
-            'is_host': is_host,
-            'score': 0  # Initialize score
-        }
-        active_sessions[session_code]['participants'].append(participant_info)
+        # Check if participant already exists in the active session to avoid duplicates
+        existing_in_session = False
+        for participant in active_sessions[session_code]['participants']:
+            if participant['name'] == participant_name and participant['is_host'] == is_host:
+                existing_in_session = True
+                participant_id = participant['id']  # Use the existing participant ID
+                break
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Only add to session if not already present
+        if not existing_in_session:
+            participant_info = {
+                'id': participant_id,
+                'name': participant_name,
+                'is_host': is_host,
+                'score': 0  # Initialize score
+            }
+            active_sessions[session_code]['participants'].append(participant_info)
 
         return jsonify({'success': True, 'participant_id': participant_id, 'is_host': is_host})
     except mysql.connector.Error as err:
