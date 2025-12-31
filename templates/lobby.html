@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Lobby - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Quiz Lobby</h1>
+            <div class="session-info">
+                <h2>Session Code: <span id="session-code-display"></span></h2>
+                <p>Share this code with participants</p>
+            </div>
+        </header>
+        
+        <main class="myquiz-main">
+            <section class="lobby-section">
+                <h2>Waiting for Participants...</h2>
+                <div class="participants-container">
+                    <h3>Participants (<span id="participant-count">0</span>):</h3>
+                    <ul id="participants-list">
+                        <!-- Participants will be listed here -->
+                    </ul>
+                </div>
+                
+                <div class="lobby-controls">
+                    <button id="start-quiz-btn" class="btn primary-btn">Start Quiz</button>
+                    <button id="end-quiz-btn" class="btn secondary-btn">End Quiz</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+</body>
+</html>

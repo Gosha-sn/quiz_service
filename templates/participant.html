@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Participant - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Quiz Participant</h1>
+            <div class="session-info">
+                <h2>Session: <span id="session-code-display"></span></h2>
+            </div>
+        </header>
+        
+        <main class="myquiz-main">
+            <!-- Waiting Area -->
+            <section id="waiting-area" class="waiting-area">
+                <h2>Waiting for Quiz to Start...</h2>
+                <p>Please wait for the host to begin the quiz</p>
+                <div class="loading-spinner"></div>
+            </section>
+            
+            <!-- Question Area -->
+            <section id="question-area" class="question-area hidden">
+                <div class="question-display">
+                    <h3 id="current-question-text"></h3>
+                    <div class="timer">
+                        <span id="timer">30</span>s
+                    </div>
+                    <div id="answers-container" class="answers-grid"></div>
+                </div>
+            </section>
+            
+            <!-- Results Area -->
+            <section id="results-area" class="results-area hidden">
+                <h2>Quiz Completed!</h2>
+                <div id="results-container"></div>
+                <button id="return-home-btn" class="btn primary-btn">Return Home</button>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/participant.js') }}"></script>
+</body>
+</html>

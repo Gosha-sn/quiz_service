@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Quiz - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Take Quiz</h1>
+            <div class="quiz-info">
+                <h2 id="quiz-title"></h2>
+                <p id="quiz-description"></p>
+            </div>
+            <div class="timer">
+                <span id="timer">30</span>s
+            </div>
+        </header>
+        
+        <main class="myquiz-main">
+            <div id="question-container">
+                <h3 id="question-text"></h3>
+                <div id="answers-container" class="answers-grid"></div>
+                <div id="correct-answer" class="correct-answer hidden">
+                    <h4>Correct Answer:</h4>
+                    <p id="correct-answer-text"></p>
+                </div>
+                <button id="next-question-btn" class="btn hidden">Next Question</button>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/take_quiz.js') }}"></script>
+</body>
+</html>

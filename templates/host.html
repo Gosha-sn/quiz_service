@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Quiz - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Host Quiz</h1>
+            <div class="session-info">
+                <h2>Session Code: <span id="session-code-display"></span></h2>
+                <p>Share this code with participants</p>
+                <div class="participant-count">Participants: <span id="participant-count">0</span></div>
+            </div>
+        </header>
+        
+        <main class="myquiz-main">
+            <!-- Waiting Room -->
+            <section id="waiting-room" class="waiting-room">
+                <h2>Waiting for Participants...</h2>
+                <p>Participants can join using the session code above</p>
+                <ul id="participants-list"></ul>
+                <div class="waiting-room-controls">
+                    <button id="start-quiz-btn" class="btn primary-btn">Start Quiz</button>
+                    <button id="go-to-lobby-btn" class="btn secondary-btn">Go to Lobby</button>
+                </div>
+            </section>
+            
+            <!-- Quiz Controls -->
+            <section id="quiz-controls" class="quiz-controls hidden">
+                <div class="current-question-display">
+                    <h3>Question: <span id="current-question-text"></span></h3>
+                    <div class="answers-display">
+                        <h4>Answers:</h4>
+                        <div id="answers-container"></div>
+                    </div>
+                </div>
+                
+                <div class="host-controls">
+                    <div class="responses-summary">
+                        <h4>Responses</h4>
+                        <div id="responses-summary-container"></div>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="next-question-btn" class="btn secondary-btn">Next Question</button>
+                        <button id="end-quiz-btn" class="btn primary-btn">End Quiz</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Results -->
+            <section id="results-section" class="results-section hidden">
+                <h2>Quiz Results</h2>
+                <div id="results-container"></div>
+                <button id="restart-quiz-btn" class="btn secondary-btn">Restart Quiz</button>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/host.js') }}"></script>
+</body>
+</html>

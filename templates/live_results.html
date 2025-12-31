@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Quiz Results - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Live Quiz Results</h1>
+            <div class="session-info">
+                <h2>Quiz: <span id="quiz-title">{{ quiz_title }}</span></h2>
+                <h3>Session: <span id="session-code-display">{{ session_code }}</span></h3>
+            </div>
+        </header>
+        
+        <main class="myquiz-main">
+            <section class="results-section">
+                <h2>Final Results</h2>
+                <div id="leaderboard-container">
+                    <table id="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Participant</th>
+                                <th>Correct Answers</th>
+                                <th>Total Questions</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            {% for participant in leaderboard %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ participant.participant_name }}</td>
+                                <td>{{ participant.correct_answers or 0 }}</td>
+                                <td>{{ participant.total_questions or 0 }}</td>
+                                <td>
+                                    {% if participant.total_questions > 0 %}
+                                        {{ "%.1f"|format((participant.correct_answers / participant.total_questions * 100) if participant.total_questions > 0 else 0) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="results-controls">
+                    <a href="/host/{{ session_code }}" class="btn primary-btn">Back to Host</a>
+                    <a href="/" class="btn secondary-btn">Back to Home</a>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

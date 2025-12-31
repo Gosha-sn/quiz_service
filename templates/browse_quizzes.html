@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Quizzes - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Browse Quizzes</h1>
+            <p>Take one of the available quizzes</p>
+        </header>
+        
+        <main class="myquiz-main">
+            <section class="myquiz-quiz-list">
+                <div id="quizzes-container">
+                    <!-- Quiz list will be populated here -->
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/browse_quizzes.js') }}"></script>
+</body>
+</html>

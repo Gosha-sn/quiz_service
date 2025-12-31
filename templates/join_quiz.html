@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Quiz - Quiz App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Join a Quiz</h1>
+        </header>
+        
+        <main>
+            <div class="join-quiz-container">
+                <div class="form-group">
+                    <label for="session-code">Enter Session Code:</label>
+                    <input type="text" id="session-code" placeholder="Enter 6-digit code" maxlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="player-name">Your Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter your name">
+                </div>
+                
+                <button id="join-btn" class="btn">Join Quiz</button>
+                
+                <div id="join-error" class="error-message hidden"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/join_quiz.js') }}"></script>
+</body>
+</html>

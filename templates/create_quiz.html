@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quiz - MyQuiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>Create a New Quiz</h1>
+            <p>Design your interactive quiz with multiple-choice questions</p>
+        </header>
+        
+        <main class="myquiz-main">
+            <form id="quiz-form">
+                <div class="form-group">
+                    <label for="quiz-title">Quiz Title:</label>
+                    <input type="text" id="quiz-title" name="title" required placeholder="Enter quiz title...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="quiz-description">Description:</label>
+                    <textarea id="quiz-description" name="description" rows="3" placeholder="Enter quiz description..."></textarea>
+                </div>
+                
+                <div id="questions-container">
+                    <!-- Questions will be added here dynamically -->
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" id="add-question-btn" class="btn secondary-btn">+ Add Question</button>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn primary-btn">Create Quiz</button>
+                    <a href="/" class="btn outline-btn">Cancel</a>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/create_quiz.js') }}"></script>
+</body>
+</html>

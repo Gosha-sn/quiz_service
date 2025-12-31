@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyQuiz - Create and Take Quizzes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="myquiz-container">
+        <header class="myquiz-header">
+            <h1>MyQuiz</h1>
+            <p>Create, share, and take interactive quizzes</p>
+        </header>
+        
+        <main class="myquiz-main">
+            <section class="myquiz-features">
+                <div class="feature-card">
+                    <h2>🚀 Create a Quiz</h2>
+                    <p>Design your own quiz with multiple-choice questions and images</p>
+                    <a href="/create_quiz" class="btn primary-btn">Create Quiz</a>
+                </div>
+                
+                <div class="feature-card">
+                    <h2>🎮 Take a Quiz</h2>
+                    <p>Join a live quiz session or take an individual quiz</p>
+                    <a href="/join_quiz" class="btn secondary-btn">Join Live Quiz</a>
+                    <a href="/browse_quizzes" class="btn outline-btn">Browse Quizzes</a>
+                </div>
+                
+                <div class="feature-card">
+                    <h2>🏆 View Leaderboard</h2>
+                    <p>See the top performers on different quizzes</p>
+                    <a href="/browse_quizzes" class="btn outline-btn">View Leaderboards</a>
+                </div>
+            </section>
+            
+            <section class="myquiz-quiz-list">
+                <h2>Your Quizzes</h2>
+                <div id="quizzes-container">
+                    <!-- Quiz list will be populated here -->
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/myquiz_main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - Quiz App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Quiz Results</h1>
+        </header>
+        
+        <main>
+            <div id="results-container">
+                <h2>Participant: <span id="participant-name"></span></h2>
+                <div id="questions-results"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/results.js') }}"></script>
+</body>
+</html>
