@@ -177,21 +177,21 @@ def create_quiz():
             quiz_id = cursor.lastrowid
             
             # Insert questions and answers
-            for question_data in questions:
+            for idx, question_data in enumerate(questions):
                 question_text = question_data.get('question')
                 answers = question_data.get('answers', [])
-                
+
                 cursor.execute(
                     "INSERT INTO questions (quiz_id, question_text, question_number) VALUES (%s, %s, %s)",
-                    (quiz_id, question_text, len(questions))
+                    (quiz_id, question_text, idx + 1)  # Use 1-based index for question number
                 )
                 question_id = cursor.lastrowid
-                
+
                 for answer_data in answers:
                     answer_text = answer_data.get('text')
                     image_url = answer_data.get('image', '')
                     is_correct = answer_data.get('is_correct', False)
-                    
+
                     cursor.execute(
                         "INSERT INTO answers (question_id, answer_text, image_url, is_correct) VALUES (%s, %s, %s, %s)",
                         (question_id, answer_text, image_url, is_correct)
@@ -499,16 +499,35 @@ def join_session(session_code):
         cursor.close()
         conn.close()
         
-        # Add to active session if it exists
-        if session_code in active_sessions:
-            participant_info = {
-                'id': participant_id,
-                'name': participant_name,
-                'is_host': is_host,
-                'score': 0  # Initialize score
+        # Add to active session if it exists, otherwise create it
+        if session_code not in active_sessions:
+            # Get total questions for the quiz to initialize the session
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as total_questions FROM questions WHERE quiz_id = %s", (quiz_id,))
+            total_questions_result = cursor.fetchone()
+            total_questions = total_questions_result[0] if total_questions_result else 0
+            cursor.close()
+            conn.close()
+
+            active_sessions[session_code] = {
+                'quiz_id': quiz_id,
+                'current_question': 0,
+                'status': 'waiting',  # waiting, active, results
+                'participants': [],
+                'responses': {},  # Track responses for each question
+                'total_questions': total_questions
             }
-            active_sessions[session_code]['participants'].append(participant_info)
-        
+
+        # Add participant to the session
+        participant_info = {
+            'id': participant_id,
+            'name': participant_name,
+            'is_host': is_host,
+            'score': 0  # Initialize score
+        }
+        active_sessions[session_code]['participants'].append(participant_info)
+
         return jsonify({'success': True, 'participant_id': participant_id, 'is_host': is_host})
     except mysql.connector.Error as err:
         print(f"Database error: {err}")
@@ -523,7 +542,38 @@ def get_session_status(session_code):
         session['participant_count'] = len(session['participants'])
         return jsonify(session)
     else:
-        return jsonify({'error': 'Session not found'}), 404
+        # If session doesn't exist, check if it's a valid quiz and create the session
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, title FROM quizzes WHERE session_code = %s", (session_code,))
+        quiz = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if quiz:
+            # Create the session in memory
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as total_questions FROM questions WHERE quiz_id = %s", (quiz['id'],))
+            total_questions_result = cursor.fetchone()
+            total_questions = total_questions_result[0] if total_questions_result else 0
+            cursor.close()
+            conn.close()
+
+            active_sessions[session_code] = {
+                'quiz_id': quiz['id'],
+                'current_question': 0,
+                'status': 'waiting',
+                'participants': [],
+                'responses': {},
+                'total_questions': total_questions
+            }
+
+            session = active_sessions[session_code]
+            session['participant_count'] = len(session['participants'])
+            return jsonify(session)
+        else:
+            return jsonify({'error': 'Session not found'}), 404
 
 # Route to get participant responses for the host
 @app.route('/responses/<session_code>')

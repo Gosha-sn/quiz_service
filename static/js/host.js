@@ -34,11 +34,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert(data.error);
                     return;
                 }
-                
+
                 quizData = data;
-                
+
                 // Start monitoring the session
                 monitorSession();
+
+                // After loading quiz data, check the current session status and update UI accordingly
+                fetch(`/session_status/${sessionCode}`)
+                    .then(response => response.json())
+                    .then(status => {
+                        if (status.error) {
+                            console.error('Session error:', status.error);
+                            return;
+                        }
+
+                        if (status.status === 'active' && quizData) {
+                            if (status.current_question < quizData.questions.length) {
+                                showQuestion(status.current_question);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting session status after loading quiz:', error);
+                    });
             })
             .catch(error => {
                 console.error('Error loading quiz:', error);
@@ -75,10 +94,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         waitingRoom.classList.add('hidden');
                         quizControls.classList.remove('hidden');
                         resultsSection.classList.add('hidden');
-                        
-                        // Show current question
-                        if (status.current_question < quizData.questions.length) {
-                            showQuestion(status.current_question);
+
+                        // Load quiz data if not already loaded
+                        if (!quizData) {
+                            loadQuiz(sessionCode);
+                        } else {
+                            // Show current question
+                            if (status.current_question < quizData.questions.length) {
+                                showQuestion(status.current_question);
+                            }
                         }
                     } else if (status.status === 'results') {
                         // Show results

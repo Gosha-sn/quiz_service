@@ -86,17 +86,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         waitingArea.classList.add('hidden');
                         questionArea.classList.remove('hidden');
                         resultsArea.classList.add('hidden');
-                        
+
                         // Load quiz data if not already loaded
                         if (!quizData) {
                             loadQuizBySessionCode(sessionCode);
-                        }
-                        
-                        // Update question if needed
-                        if (status.current_question !== currentQuestionIndex && quizData) {
-                            currentQuestionIndex = status.current_question;
-                            if (currentQuestionIndex < quizData.questions.length) {
-                                showQuestion(currentQuestionIndex);
+                        } else {
+                            // Update question if needed (only if quizData is already loaded)
+                            if (status.current_question !== currentQuestionIndex) {
+                                currentQuestionIndex = status.current_question;
+                                if (currentQuestionIndex < quizData.questions.length) {
+                                    showQuestion(currentQuestionIndex);
+                                }
                             }
                         }
                     } else if (status.status === 'results') {
@@ -127,8 +127,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert(data.error);
                     return;
                 }
-                
+
                 quizData = data;
+
+                // After loading quiz data, check the current session status and update UI accordingly
+                fetch(`/session_status/${sessionCode}`)
+                    .then(response => response.json())
+                    .then(status => {
+                        if (status.error) {
+                            console.error('Session error:', status.error);
+                            return;
+                        }
+
+                        if (status.status === 'active' && status.current_question !== currentQuestionIndex) {
+                            currentQuestionIndex = status.current_question;
+                            if (currentQuestionIndex < quizData.questions.length) {
+                                showQuestion(currentQuestionIndex);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting session status after loading quiz:', error);
+                    });
             })
             .catch(error => {
                 console.error('Error loading quiz:', error);
