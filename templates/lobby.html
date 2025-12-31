@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Lobby - MyQuiz</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
     <div class="myquiz-container">
@@ -13,14 +14,17 @@
             <div class="session-info">
                 <h2>Session Code: <span id="session-code-display"></span></h2>
                 <p>Share this code with participants</p>
+                <div class="qr-code-container">
+                    <h3>Or scan the QR code:</h3>
+                    <canvas id="qr-code-canvas"></canvas>
+                </div>
             </div>
         </header>
         
         <main class="myquiz-main">
-            <section class="lobby-section">
-                <h2>Waiting for Participants...</h2>
+            <div class="lobby-section">
                 <div class="participants-container">
-                    <h3>Participants (<span id="participant-count">0</span>):</h3>
+                    <h3>Participants (<span id="participants-count">0</span>):</h3>
                     <ul id="participants-list">
                         <!-- Participants will be listed here -->
                     </ul>
@@ -28,9 +32,38 @@
                 
                 <div class="lobby-controls">
                     <button id="start-quiz-btn" class="btn primary-btn">Start Quiz</button>
-                    <button id="end-quiz-btn" class="btn secondary-btn">End Quiz</button>
+                    <button id="end-quiz-btn" class="btn danger-btn">End Quiz</button>
                 </div>
-            </section>
+            </div>
+            
+            <div id="quiz-area" class="quiz-area hidden">
+                <div id="current-question-display" class="current-question-display">
+                    <h3>Current Question: <span id="current-question-text"></span></h3>
+                    <div id="answers-display" class="answers-grid">
+                        <!-- Answers will be displayed here -->
+                    </div>
+                </div>
+                
+                <div class="responses-summary">
+                    <h4>Responses:</h4>
+                    <div id="responses-summary-container">
+                        <!-- Response summary will be shown here -->
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="next-question-btn" class="btn secondary-btn">Next Question</button>
+                    <button id="show-results-btn" class="btn primary-btn">Show Results</button>
+                </div>
+            </div>
+            
+            <div id="results-area" class="results-area hidden">
+                <h2>Quiz Results</h2>
+                <div id="results-container">
+                    <!-- Results will be displayed here -->
+                </div>
+                <button id="restart-quiz-btn" class="btn secondary-btn">Restart Quiz</button>
+            </div>
         </main>
     </div>
     

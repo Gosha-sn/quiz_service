@@ -10,16 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentQuestionText = document.getElementById('current-question-text');
     const answersContainer = document.getElementById('answers-container');
     const timerElement = document.getElementById('timer');
-    const returnHomeBtn = document.getElementById('return-home-btn');
     const resultsContainer = document.getElementById('results-container');
     
     let quizData = null;
     let participantId = null;
-    let isHost = false;
+    let currentQuestionIndex = 0;
     let timer = null;
     let timeLeft = 30;
     
-    // Get participant info from localStorage or prompt
+    // Get participant name from localStorage or prompt
     let participantName = localStorage.getItem('participantName');
     if (!participantName) {
         participantName = prompt('Please enter your name:');
@@ -52,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 participantId = data.participant_id;
-                isHost = data.is_host;
                 
                 // Start monitoring the session
                 monitorSession();
@@ -68,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to monitor the session status
     function monitorSession() {
-        // Check session status periodically
         setInterval(() => {
             fetch(`/session_status/${sessionCode}`)
                 .then(response => response.json())
@@ -78,21 +75,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     
+                    // Update participant count if available
+                    if (status.participant_count !== undefined) {
+                        document.getElementById('participant-count').textContent = status.participant_count;
+                    }
+                    
                     // Update UI based on session status
                     if (status.status === 'active') {
-                        // Hide waiting area, show question area
+                        // Show question area, hide others
                         waitingArea.classList.add('hidden');
                         questionArea.classList.remove('hidden');
                         resultsArea.classList.add('hidden');
                         
                         // Load quiz data if not already loaded
                         if (!quizData) {
-                            loadQuiz();
+                            loadQuizBySessionCode(sessionCode);
                         }
                         
-                        // Update question and answers
-                        if (status.current_question < quizData.questions.length) {
-                            showQuestion(status.current_question);
+                        // Update question if needed
+                        if (status.current_question !== currentQuestionIndex && quizData) {
+                            currentQuestionIndex = status.current_question;
+                            if (currentQuestionIndex < quizData.questions.length) {
+                                showQuestion(currentQuestionIndex);
+                            }
                         }
                     } else if (status.status === 'results') {
                         // Show results
@@ -113,9 +118,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000); // Update every 2 seconds
     }
     
-    // Function to load the quiz
-    function loadQuiz() {
-        fetch(`/api/quiz_by_code/${sessionCode}`)
+    // Function to load quiz by session code
+    function loadQuizBySessionCode(code) {
+        fetch(`/api/quiz_by_code/${code}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -139,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const question = quizData.questions[index];
         
-        // Display question
+        // Display question text
         currentQuestionText.textContent = question.question_text;
         
         // Create answer buttons
@@ -235,9 +240,4 @@ document.addEventListener('DOMContentLoaded', function() {
         clearInterval(timer);
         resultsContainer.innerHTML = '<p>Quiz completed! Thank you for participating.</p>';
     }
-    
-    // Event listener for return home button
-    returnHomeBtn.addEventListener('click', function() {
-        window.location.href = '/';
-    });
 });

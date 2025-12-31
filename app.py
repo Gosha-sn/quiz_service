@@ -4,16 +4,9 @@ import os
 import uuid
 from datetime import datetime
 import json
+from db_config import DB_CONFIG
 
 app = Flask(__name__)
-
-# Database configuration
-DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'user': os.environ.get('DB_USER', 'root'),  # Change this to your MySQL username
-    'password': os.environ.get('DB_PASSWORD', 'toor123@'),  # Change this to your MySQL password
-    'database': os.environ.get('DB_NAME', 'quiz_db')
-}
 
 # In-memory storage for active quiz sessions
 active_sessions = {}
@@ -53,6 +46,7 @@ def init_db():
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 quiz_id INT NOT NULL,
                 question_text TEXT NOT NULL,
+                question_number INT DEFAULT 1,
                 FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
             )
         """)
@@ -105,13 +99,13 @@ def init_db():
         return False
     return True
 
-def check_and_add_session_code_column():
-    """Check if session_code column exists in quizzes table, add if missing"""
+def check_and_add_columns():
+    """Check if required columns exist in tables, add if missing"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Check if session_code column exists
+        # Check if session_code column exists in quizzes table
         cursor.execute("SHOW COLUMNS FROM quizzes LIKE 'session_code'")
         result = cursor.fetchone()
         
@@ -120,7 +114,7 @@ def check_and_add_session_code_column():
             cursor.execute("ALTER TABLE quizzes ADD COLUMN session_code VARCHAR(10) UNIQUE")
             print("Added session_code column to quizzes table")
         
-        # Also check if session_code column exists in participants table
+        # Check if session_code column exists in participants table
         cursor.execute("SHOW COLUMNS FROM participants LIKE 'session_code'")
         result = cursor.fetchone()
         
@@ -129,11 +123,29 @@ def check_and_add_session_code_column():
             cursor.execute("ALTER TABLE participants ADD COLUMN session_code VARCHAR(10)")
             print("Added session_code column to participants table")
         
+        # Check if is_host column exists in participants table
+        cursor.execute("SHOW COLUMNS FROM participants LIKE 'is_host'")
+        result = cursor.fetchone()
+        
+        if not result:
+            # Add is_host column if it doesn't exist
+            cursor.execute("ALTER TABLE participants ADD COLUMN is_host BOOLEAN DEFAULT FALSE")
+            print("Added is_host column to participants table")
+        
+        # Check if question_number column exists in questions table
+        cursor.execute("SHOW COLUMNS FROM questions LIKE 'question_number'")
+        result = cursor.fetchone()
+        
+        if not result:
+            # Add question_number column if it doesn't exist
+            cursor.execute("ALTER TABLE questions ADD COLUMN question_number INT DEFAULT 1")
+            print("Added question_number column to questions table")
+        
         cursor.close()
         conn.close()
         return True
     except mysql.connector.Error as err:
-        print(f"Error checking/adding session_code column: {err}")
+        print(f"Error checking/adding columns: {err}")
         return False
 
 # Route to serve the main page (MyQuiz-like interface)
@@ -170,8 +182,8 @@ def create_quiz():
                 answers = question_data.get('answers', [])
                 
                 cursor.execute(
-                    "INSERT INTO questions (quiz_id, question_text) VALUES (%s, %s)",
-                    (quiz_id, question_text)
+                    "INSERT INTO questions (quiz_id, question_text, question_number) VALUES (%s, %s, %s)",
+                    (quiz_id, question_text, len(questions))
                 )
                 question_id = cursor.lastrowid
                 
@@ -251,12 +263,12 @@ def get_quiz(quiz_id):
         
         # Get questions and answers for the quiz
         cursor.execute("""
-            SELECT q.id, q.question_text,
+            SELECT q.id, q.question_text, q.question_number,
                    a.id as answer_id, a.answer_text, a.image_url, a.is_correct
             FROM questions q
             LEFT JOIN answers a ON q.id = a.question_id
             WHERE q.quiz_id = %s
-            ORDER BY q.id, a.id
+            ORDER BY q.question_number, q.id, a.id
         """, (quiz_id,))
         
         results = cursor.fetchall()
@@ -269,6 +281,7 @@ def get_quiz(quiz_id):
                 questions[q_id] = {
                     'id': q_id,
                     'question_text': row['question_text'],
+                    'question_number': row['question_number'],
                     'answers': []
                 }
             
@@ -308,12 +321,12 @@ def get_quiz_by_code(session_code):
         
         # Get questions and answers for the quiz
         cursor.execute("""
-            SELECT q.id, q.question_text,
+            SELECT q.id, q.question_text, q.question_number,
                    a.id as answer_id, a.answer_text, a.image_url, a.is_correct
             FROM questions q
             LEFT JOIN answers a ON q.id = a.question_id
             WHERE q.quiz_id = %s
-            ORDER BY q.id, a.id
+            ORDER BY q.question_number, q.id, a.id
         """, (quiz['id'],))
         
         results = cursor.fetchall()
@@ -326,6 +339,7 @@ def get_quiz_by_code(session_code):
                 questions[q_id] = {
                     'id': q_id,
                     'question_text': row['question_text'],
+                    'question_number': row['question_number'],
                     'answers': []
                 }
             
@@ -619,14 +633,14 @@ def get_quiz_results(quiz_id, participant_id):
         
         # Get all questions and answers for the quiz
         cursor.execute("""
-            SELECT q.id as question_id, q.question_text,
+            SELECT q.id as question_id, q.question_text, q.question_number,
                    a.id as answer_id, a.answer_text, a.is_correct,
                    r.answer_id as selected_answer_id
             FROM questions q
             LEFT JOIN answers a ON q.id = a.question_id
             LEFT JOIN responses r ON r.question_id = q.id AND r.participant_id = %s
             WHERE q.quiz_id = %s
-            ORDER BY q.id, a.id
+            ORDER BY q.question_number, q.id, a.id
         """, (participant_id, quiz_id))
         
         results = cursor.fetchall()
@@ -648,6 +662,7 @@ def get_quiz_results(quiz_id, participant_id):
                 questions[q_id] = {
                     'id': q_id,
                     'question_text': row['question_text'],
+                    'question_number': row['question_number'],
                     'answers': [],
                     'selected_answer_id': row['selected_answer_id'],
                     'is_correct': False
@@ -870,7 +885,7 @@ def start_lobby(quiz_id):
     # Get quiz details
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT session_code FROM quizzes WHERE id = %s", (quiz_id,))
+    cursor.execute("SELECT session_code, title FROM quizzes WHERE id = %s", (quiz_id,))
     result = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -903,20 +918,74 @@ def start_lobby(quiz_id):
     # Redirect to the lobby page
     return render_template('lobby.html', session_code=session_code)
 
+# Route to generate QR code for lobby
+@app.route('/qr_code/<session_code>')
+def generate_qr_code(session_code):
+    # In a real implementation, you would generate an actual QR code
+    # For now, we'll return a placeholder response
+    lobby_url = f"{request.url_root}quiz/{session_code}"
+    return jsonify({
+        'session_code': session_code,
+        'qr_url': lobby_url,
+        'message': 'QR code would be generated here in a full implementation'
+    })
+
+# Route to get session status (for participant monitoring)
+@app.route('/get_session_status/<session_code>')
+def get_session_status_detailed(session_code):
+    if session_code in active_sessions:
+        session = active_sessions[session_code]
+        # Add participant count to the response
+        session['participant_count'] = len(session['participants'])
+        return jsonify(session)
+    else:
+        # If session doesn't exist, check if it's a valid quiz
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, title FROM quizzes WHERE session_code = %s", (session_code,))
+        quiz = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if quiz:
+            # Create the session in memory
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as total_questions FROM questions WHERE quiz_id = %s", (quiz['id'],))
+            total_questions_result = cursor.fetchone()
+            total_questions = total_questions_result[0] if total_questions_result else 0
+            cursor.close()
+            conn.close()
+            
+            active_sessions[session_code] = {
+                'quiz_id': quiz['id'],
+                'current_question': 0,
+                'status': 'waiting',
+                'participants': [],
+                'responses': {},
+                'total_questions': total_questions
+            }
+            
+            session = active_sessions[session_code]
+            session['participant_count'] = len(session['participants'])
+            return jsonify(session)
+        else:
+            return jsonify({'error': 'Session not found'}), 404
+
 if __name__ == '__main__':
     print("Starting the application...")
     print("Make sure MySQL server is running before starting the application.")
     print("If MySQL is not installed, please install it first:")
     print("1. Download MySQL from https://dev.mysql.com/downloads/mysql/")
     print("2. Install and start the MySQL server")
-    print("3. Update the DB_CONFIG in app.py with your MySQL credentials")
+    print("3. Update the DB_CONFIG in db_config.py with your MySQL credentials")
     print("4. Run: python app.py")
     print("\nThe application will be available at http://localhost:5000")
     
     # Initialize database
     if init_db():
-        # Check and add session_code column if needed
-        check_and_add_session_code_column()
+        # Check and add required columns if needed
+        check_and_add_columns()
         print("\nStarting the application...")
         app.run(debug=True, host='0.0.0.0', port=5000)
     else:
